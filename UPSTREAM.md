@@ -30,6 +30,11 @@ Downstream-only files stay separate from upstream implementation code:
   Pi tool and command surfaces for Workbench's shared exact-SHA gate.
 - `downstream/verify-distribution.mjs` exercises fresh install, update,
   commit-pinned rollback, and return to the stable lane in an isolated Pi home.
+- `test/chrome-cookie-extraction.test.mjs` makes the password-retry assertion
+  platform-aware. On Linux, a failed `secret-tool` lookup intentionally falls
+  back to Chromium's `peanuts` password and can decrypt on the first attempt;
+  macOS returns `null`. This is test-only and should be removed when upstream
+  adopts an equivalent platform-aware assertion.
 
 Do not carry implementation patches without recording their purpose, upstream
 issue or PR, and removal condition in this section.
