@@ -16,7 +16,7 @@ to its active upstream.
 | Downstream integration branch | `main` |
 | Downstream release/default branch | `stable` |
 | Bootstrap base | `8f11a0a94988093b0ea5d725d18e8dcabacd2373` (`v0.27.0`) |
-| Last synced upstream commit | `8f11a0a94988093b0ea5d725d18e8dcabacd2373` (`v0.27.0`) |
+| Last synced upstream commit | `711cc41313202e277a248b1cc45942b6dc8927f7` (post-`v0.27.0`) |
 
 ## Intentional downstream changes
 
@@ -100,7 +100,9 @@ The bootstrap baseline is:
 Workbench's shared compatibility runner checks the exact downstream SHA, loads
 both extension entry points in an isolated Pi process, requires web-access's
 four tools and four commands, and then verifies that Workbench still starts
-without this optional package.
+without this optional package. `PI_OFFLINE=1` suppresses Pi-managed network
+activity for this check, but it is not a network sandbox and does not prevent
+extension code or child processes from opening network connections.
 
 Linux CI is authoritative for the upstream suite. The current Windows host
 cannot create the symlinks used by some tests and CRLF checkouts invalidate
