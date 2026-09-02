@@ -85,6 +85,14 @@ brew install yt-dlp   # YouTube stream URLs for frame extraction
 
 Without these, video content analysis (transcripts, visual descriptions via Gemini) still works. The binaries are only needed for extracting individual frames as images.
 
+System dependency for curator browser launch on Linux:
+
+| Package | Purpose | Install |
+|---------|---------|---------|
+| `xdg-utils` | Opens the curator UI in your default browser | Debian/Ubuntu: `sudo apt install -y xdg-utils` · Fedora/RHEL: `sudo dnf install -y xdg-utils` · Arch: `sudo pacman -S xdg-utils` |
+
+Without `xdg-utils`, the curator URL is printed to the tool output so you can copy it into a browser.
+
 Requires Pi v0.37.3+.
 
 ## Quick Start
@@ -355,7 +363,7 @@ Toggle with **Ctrl+Shift+W** to see live request/response activity:
 
 ## Configuration
 
-Config defaults to `~/.pi/web-search.json`, or `web-search.json` under `PI_CODING_AGENT_DIR` / `XDG_CONFIG_HOME/pi` when set. Every field is optional.
+Config defaults to `~/.pi/web-search.json`. `PI_CODING_AGENT_DIR` takes precedence when set; with `XDG_CONFIG_HOME`, an existing `XDG_CONFIG_HOME/pi/web-search.json` is preferred, an existing legacy `~/.pi/web-search.json` remains usable, and the XDG path is used as the new-config target when neither file exists. Every field is optional.
 
 ```json
 {
