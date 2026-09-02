@@ -1,8 +1,13 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
+const downstreamRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const manifest = JSON.parse(
+  readFileSync(join(downstreamRoot, "downstream", "compatibility.json"), "utf8"),
+);
 const source = "git:github.com/h1057399903-web/pi-web-access";
 const bootstrapSha = "8f11a0a94988093b0ea5d725d18e8dcabacd2373";
 const expectedStableSha = process.env.PI_EXPECTED_STABLE_SHA;
@@ -25,7 +30,8 @@ const cloneDir = join(
   "h1057399903-web",
   "pi-web-access",
 );
-const requiredCommands = ["websearch", "curator", "google-account", "search"];
+const requiredCommands = manifest.requiredCommands;
+const requiredTools = manifest.requiredTools;
 
 if (!expectedStableSha) {
   throw new Error("PI_EXPECTED_STABLE_SHA must be the reviewed stable commit");
@@ -61,7 +67,14 @@ function head() {
   return run("git", ["-C", cloneDir, "rev-parse", "HEAD"]);
 }
 
-function assertInstalledCommands(id) {
+function assertIncludes(actual, requiredValues, label) {
+  const missing = requiredValues.filter((value) => !actual.includes(value));
+  if (missing.length > 0) {
+    throw new Error(`${label} missing: ${missing.join(", ")}`);
+  }
+}
+
+async function assertInstalledSurface(id) {
   const output = run(
     process.execPath,
     [
@@ -87,9 +100,50 @@ function assertInstalledCommands(id) {
   const commands = (response.data?.commands ?? response.data ?? []).map(
     (command) => (typeof command === "string" ? command : command.name),
   );
-  const missing = requiredCommands.filter((command) => !commands.includes(command));
-  if (missing.length > 0) {
-    throw new Error(`Installed package is missing commands: ${missing.join(", ")}`);
+  assertIncludes(commands, requiredCommands, "Installed RPC commands");
+
+  const sdk = await import(
+    pathToFileURL(
+      join(
+        piInstallRoot,
+        "node_modules",
+        "@earendil-works",
+        "pi-coding-agent",
+        "dist",
+        "index.js",
+      ),
+    ).href
+  );
+  const settingsManager = sdk.SettingsManager.inMemory({});
+  const loader = new sdk.DefaultResourceLoader({
+    cwd: cloneDir,
+    agentDir,
+    settingsManager,
+    additionalExtensionPaths: [join(cloneDir, manifest.extension)],
+  });
+  await loader.reload();
+  const result = await sdk.createAgentSession({
+    cwd: cloneDir,
+    agentDir,
+    resourceLoader: loader,
+    sessionManager: sdk.SessionManager.inMemory(cloneDir),
+    settingsManager,
+    noTools: "builtin",
+  });
+  try {
+    if (result.extensionsResult.errors.length > 0) {
+      throw new Error(
+        `Installed extension load errors: ${JSON.stringify(result.extensionsResult.errors)}`,
+      );
+    }
+    const tools = result.session.getAllTools().map((tool) => tool.name);
+    const sdkCommands = result.extensionsResult.runtime
+      .getCommands()
+      .map((command) => command.name);
+    assertIncludes(tools, requiredTools, "Installed SDK tools");
+    assertIncludes(sdkCommands, requiredCommands, "Installed SDK commands");
+  } finally {
+    result.session.dispose();
   }
 }
 
@@ -98,7 +152,7 @@ try {
   if (head() !== expectedStableSha) {
     throw new Error(`Fresh install did not resolve stable: ${head()}`);
   }
-  assertInstalledCommands("fresh-stable");
+  await assertInstalledSurface("fresh-stable");
 
   pi("update", "--extensions");
   if (head() !== expectedStableSha) {
@@ -115,7 +169,7 @@ try {
   if (head() !== expectedStableSha) {
     throw new Error(`Return to the moving stable lane failed: ${head()}`);
   }
-  assertInstalledCommands("returned-stable");
+  await assertInstalledSurface("returned-stable");
 
   const settings = JSON.parse(readFileSync(join(agentDir, "settings.json"), "utf8"));
   const packages = settings.packages ?? [];
@@ -132,6 +186,7 @@ try {
       source,
       stable: expectedStableSha,
       rollback: bootstrapSha,
+      tools: requiredTools,
       commands: requiredCommands,
       isolatedAgentDir: agentDir,
     }),

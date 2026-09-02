@@ -47,7 +47,11 @@ jobs:
       - run: npm run audit:runtime
       - run: npm pack --dry-run
       - name: Validate Workbench compatibility manifest
-        run: node -e "const m=require('./downstream/compatibility.json'); if(m.schemaVersion!==1||!m.extension||!m.requiredTools?.length||!m.requiredCommands?.length) process.exit(1)"
+        run: >-
+          node -e "const fs=require('fs'); const m=require('./downstream/compatibility.json');
+          const p=require('./package.json'); const lists=[m.requiredTools,m.requiredCommands];
+          const valid=lists.every(a=>Array.isArray(a)&&a.length>0&&new Set(a).size===a.length&&a.every(v=>typeof v==='string'&&/^[a-z][a-z0-9_-]*$/.test(v)));
+          if(m.schemaVersion!==1||m.package!==p.name||m.extension!=='index.ts'||!fs.existsSync(m.extension)||!valid) process.exit(1)"
 
   disposable-distribution:
     if: >-
