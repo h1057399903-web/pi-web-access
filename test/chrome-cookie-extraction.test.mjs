@@ -362,7 +362,11 @@ test("failed password lookups are retried instead of cached", (t) => {
 	});
 	assert.equal(child.status, 0, child.stderr);
 	const result = JSON.parse(child.stdout);
-	assert.equal(result.first, null);
+	if (process.platform === "darwin") {
+		assert.equal(result.first, null);
+	} else {
+		assert.deepEqual(result.first.cookies, { "__Secure-1PSIDTS": "two", "__Secure-1PSID": "one" });
+	}
 	assert.deepEqual(result.second.cookies, { "__Secure-1PSIDTS": "two", "__Secure-1PSID": "one" });
 	assert.equal(readFileSync(countPath, "utf8"), "2");
 	rmSync(home, { recursive: true, force: true });

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "package": "pi-web-access",
+  "extension": "index.ts",
+  "requiredTools": [
+    "web_search",
+    "source_check",
+    "fetch_content",
+    "get_search_content"
+  ],
+  "requiredCommands": [
+    "websearch",
+    "curator",
+    "google-account",
+    "search"
+  ]
+}
