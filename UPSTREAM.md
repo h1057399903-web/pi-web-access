@@ -16,7 +16,7 @@ to its active upstream.
 | Downstream integration branch | `main` |
 | Downstream release/default branch | `stable` |
 | Bootstrap base | `8f11a0a94988093b0ea5d725d18e8dcabacd2373` (`v0.27.0`) |
-| Last synced upstream commit | `8f11a0a94988093b0ea5d725d18e8dcabacd2373` (`v0.27.0`) |
+| Last synced upstream commit | `711cc41313202e277a248b1cc45942b6dc8927f7` (post-`v0.27.0`) |
 
 ## Intentional downstream changes
 
