@@ -100,7 +100,9 @@ The bootstrap baseline is:
 Workbench's shared compatibility runner checks the exact downstream SHA, loads
 both extension entry points in an isolated Pi process, requires web-access's
 four tools and four commands, and then verifies that Workbench still starts
-without this optional package.
+without this optional package. `PI_OFFLINE=1` suppresses Pi-managed network
+activity for this check, but it is not a network sandbox and does not prevent
+extension code or child processes from opening network connections.
 
 Linux CI is authoritative for the upstream suite. The current Windows host
 cannot create the symlinks used by some tests and CRLF checkouts invalidate
